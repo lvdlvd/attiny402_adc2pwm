@@ -108,7 +108,10 @@ ISR(ADC0_RESRDY_vect) {
     }
 
     uint16_t val = ADC0.RES;       // reading clears the interrupt flag
-    TCA0.SINGLE.CMP0BUF = val;     // val has a 14 bit range
+
+    if (OUTPUT_PWM) {
+        TCA0.SINGLE.CMP0BUF = val;     // val has a 14 bit range
+    }
 
     if (OUTPUT_SERIAL) {
         val = (2500*65536UL) / val;  // convert to Vdd[mv]
