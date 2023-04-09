@@ -106,6 +106,7 @@ ISR(ADC0_RESRDY_vect) {
     if (OUTPUT_DEBUG) {
         PORTA.OUTTGL = 1<<1;       // toggle PA1
     }
+
     uint16_t val = ADC0.RES;       // reading clears the interrupt flag
     TCA0.SINGLE.CMP0BUF = val;     // val has a 14 bit range
 
@@ -120,7 +121,7 @@ ISR(ADC0_RESRDY_vect) {
 }
 
 int main() {
-    // The attiny402 should only come with a 16MHz main clock.
+    // The attiny402 only comes with a 16MHz main clock.
     _PROTECTED_WRITE(CLKCTRL.MCLKCTRLB, 1);  // 11.5.2 mainclock div 2, for 8MHz 
 
     VREF.CTRLA   = VREF_ADC0REFSEL_2V5_gc;    // sec 19.5.1 2.500V
@@ -138,7 +139,8 @@ int main() {
     EVSYS.SYNCCH0    = EVSYS_SYNCCH0_TCA0_OVF_LUNF_gc;  // sync channel 0 = TCA overflow
     EVSYS.ASYNCUSER1 = EVSYS_ASYNCUSER1_SYNCCH0_gc;     // ADC (= user 1) start on event sync channel 0
 
-    TCA0.SINGLE.PER   = 0x3fff;      // count in 14 bits: 8MHz/16384 = 488Hz or 2.048ms
+    // TCA0 count in 14 bits: 8MHz/16384 = 488Hz or 2.048ms, with CMP0 generating PWM
+    TCA0.SINGLE.PER   = 0x3fff;         
     TCA0.SINGLE.CTRLA = TCA_SINGLE_CLKSEL_DIV1_gc | TCA_SINGLE_ENABLE_bm;  
     TCA0.SINGLE.CTRLB = TCA_SINGLE_CMP0EN_bm | TCA_SINGLE_WGMODE_SINGLESLOPE_gc;
 
@@ -149,13 +151,13 @@ int main() {
 
     if (OUTPUT_SERIAL) {
         setbaud(&USART0, 115200);
-        USART0.CTRLB = USART_TXEN_bm; // enable TX, add USART_ODME_bm to set open drain mode
-        USART0.CTRLA = USART_DREIE_bm; // enable TX register empty irq
-        PORTA.DIRSET = 1<<6; // set PA6 as TXD 
+        USART0.CTRLB = USART_TXEN_bm;       // enable TX, add USART_ODME_bm to set open drain mode
+        USART0.CTRLA = USART_DREIE_bm;      // enable TX register empty irq
+        PORTA.DIRSET = 1<<6;                // set PA6 as TXD 
     }
 
     if (OUTPUT_DEBUG) {
-        PORTA.DIRSET = 1<<1; // PA1 for debug output
+        PORTA.DIRSET = 1<<1;                // PA1 for debug output
     }
 
     sei(); // enable interrupts
