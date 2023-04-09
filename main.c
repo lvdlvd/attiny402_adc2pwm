@@ -30,9 +30,10 @@
 
     Pinout (section 5)
 
-    8-pins version
+    the 402 is an 8-pins version:
     PA3   WO0  PWM-out
     PA6   TXD  serial out
+    PA1   toggled on ADC conversion ready for debug
 
 */
 #include <avr/interrupt.h>
@@ -103,7 +104,7 @@ ISR(USART0_DRE_vect) {
 
 ISR(ADC0_RESRDY_vect) {
     if (OUTPUT_DEBUG) {
-        PORTA.OUTTGL = 1<<0;       // toggle PA0
+        PORTA.OUTTGL = 1<<1;       // toggle PA1
     }
     uint16_t val = ADC0.RES;       // reading clears the interrupt flag
     TCA0.SINGLE.CMP0BUF = val;     // val has a 14 bit range
@@ -154,7 +155,7 @@ int main() {
     }
 
     if (OUTPUT_DEBUG) {
-        PORTA.DIRSET = 1<<0; // PA0 for debug output
+        PORTA.DIRSET = 1<<1; // PA1 for debug output
     }
 
     sei(); // enable interrupts
