@@ -56,6 +56,7 @@ static void setbaud(USART_t* usart, uint32_t bd) {
     switch (FUSE.OSCCFG & 0x3) { // Section 7.10.4.3
     case 1: // 16MHhz mainclock
          clk = 16000000 * (1024 + SIGROW.OSC16ERR3V); // should be the error at 3V
+         break;
     }
 
     if (CLKCTRL.MCLKCTRLB & 1) {
