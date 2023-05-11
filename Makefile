@@ -6,7 +6,7 @@ F_CPU=16000000L
 ATDIR=../Atmel.ATtiny_DFP.2.0.368
 
 
-CFLAGS=-mmcu=attiny402 -B $(ATDIR)/gcc/dev/attiny402/ -O3
+CFLAGS=-mmcu=attiny402 -B $(ATDIR)/gcc/dev/attiny402/ -O3 -Wall
 CFLAGS+=-I $(ATDIR)/include/ -DF_CPU=$(F_CPU)
 LDFLAGS=-mmcu=attiny402 -B$(ATDIR)/gcc/dev/attiny402/
 CC=avr-gcc
