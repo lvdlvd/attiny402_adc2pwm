@@ -25,15 +25,13 @@
     - optionally PA1 is toggled whenever the ADC is ready, 
       useful for validating with an oscilloscope together with the PWM signal
 
-    * TODO
-        - deep sleep
-
     Pinout (section 5)
 
-    the 402 is an 8-pins version:
+    The 402 is an 8-pins version:
+
     PA3   WO0  PWM-out
     PA6   TXD  serial out
-    PA1   toggled on ADC conversion ready for debug
+    PA1   toggled on ADC conversion-ready for debug
 
 */
 #include <avr/interrupt.h>
@@ -131,7 +129,7 @@ int main() {
     VREF.CTRLA   = VREF_ADC0REFSEL_2V5_gc;    // sec 19.5.1 2.500V
     VREF.CTRLB   = VREF_ADC0REFEN_bm;         // sec 19.5.2 keep on
 
-    // per trigger sample 64 samples at 1MHz ADC clock, or 128 cycles per trigger
+    // Configure ADC for 64-fold oversampling at 1Mhz ADC clock with varying sample delay.
     ADC0.CTRLA   = ADC_RESSEL_10BIT_gc;       // full resolution.
     ADC0.CTRLB   = ADC_SAMPNUM_ACC64_gc;      // 64 samples (6 extra bits, 16 bits total)   
     ADC0.CTRLC   = ADC_SAMPCAP_bm | ADC_REFSEL_VDDREF_gc | ADC_PRESC_DIV8_gc;   // Vref = Vdd, lower cap, run at 8/8 = 1MHz
