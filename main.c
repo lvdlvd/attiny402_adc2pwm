@@ -111,7 +111,7 @@ ISR(ADC0_RESRDY_vect) {
     uint16_t val = ADC0.RES;       // reading clears the interrupt flag
 
     if (OUTPUT_PWM) {
-        TCA0.SINGLE.CMP0BUF = val;     // val has a 14 bit range
+        TCA0.SINGLE.CMP0BUF = val >> 2;     // val has a 16 bit range
     }
 
     if (OUTPUT_SERIAL) {
@@ -126,18 +126,19 @@ ISR(ADC0_RESRDY_vect) {
 
 int main() {
     // The attiny402 only comes with a 16MHz main clock.
-    _PROTECTED_WRITE(CLKCTRL.MCLKCTRLB, 1);  // 11.5.2 mainclock div 2, for 8MHz 
+    _PROTECTED_WRITE(CLKCTRL.MCLKCTRLB, 1);   // 11.5.2 mainclock div 2, for 8MHz 
 
     VREF.CTRLA   = VREF_ADC0REFSEL_2V5_gc;    // sec 19.5.1 2.500V
     VREF.CTRLB   = VREF_ADC0REFEN_bm;         // sec 19.5.2 keep on
 
+    // per trigger sample 64 samples at 1MHz ADC clock, or 128 cycles per trigger
     ADC0.CTRLA   = ADC_RESSEL_10BIT_gc;       // full resolution.
-    ADC0.CTRLB   = ADC_SAMPNUM_ACC16_gc;      // 16 samples (4 extra bits, 14 bits total)   
+    ADC0.CTRLB   = ADC_SAMPNUM_ACC64_gc;      // 64 samples (6 extra bits, 16 bits total)   
     ADC0.CTRLC   = ADC_SAMPCAP_bm | ADC_REFSEL_VDDREF_gc | ADC_PRESC_DIV8_gc;   // Vref = Vdd, lower cap, run at 8/8 = 1MHz
-    ADC0.MUXPOS  = ADC_MUXPOS_INTREF_gc;       // internal Vref as positive input (single ended)
+    ADC0.MUXPOS  = ADC_MUXPOS_INTREF_gc;      // internal Vref as positive input (single ended)
     ADC0.EVCTRL  = ADC_STARTEI_bm;            // start on event
     ADC0.INTCTRL = ADC_RESRDY_bm;             // irq on result ready
-    ADC0.CTRLA  |= ADC_ENABLE_bm;             // enable the ADC
+    ADC0.CTRLA  |= ADC_RUNSTDBY | ADC_ENABLE_bm;  // enable the ADC, also run while sleep
 
     // Configure event routing: TCA overflow -> synch0 -> user1 -> ADC start
     EVSYS.SYNCCH0    = EVSYS_SYNCCH0_TCA0_OVF_LUNF_gc;  // sync channel 0 = TCA overflow
