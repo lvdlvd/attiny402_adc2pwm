@@ -13,8 +13,8 @@
     - ADC is configured as follows:
         * single ended VREF as +input
         * VDD as Vref
-        * sample duration 2, oversample 16x
-            conversion time = ( 13 * 16 ) / 1MHz = 208us.
+        * sample duration 2+0...15 (adsv), oversample 64x
+            conversion time = ( xx * 64 ) / 1MHz = ... us.
     - TCA0 is set to count to 16384 on the 8MHz clock 2.048 ms period or 488.28Hz
     - an update triggers the ADC event
     - Channel 0 is configured to PWM mode, inverted output
@@ -26,7 +26,7 @@
       useful for validating with an oscilloscope together with the PWM signal
 
     * TODO
-        - deep sleep, delays for ADC when starting up
+        - deep sleep
 
     Pinout (section 5)
 
@@ -135,6 +135,7 @@ int main() {
     ADC0.CTRLA   = ADC_RESSEL_10BIT_gc;       // full resolution.
     ADC0.CTRLB   = ADC_SAMPNUM_ACC64_gc;      // 64 samples (6 extra bits, 16 bits total)   
     ADC0.CTRLC   = ADC_SAMPCAP_bm | ADC_REFSEL_VDDREF_gc | ADC_PRESC_DIV8_gc;   // Vref = Vdd, lower cap, run at 8/8 = 1MHz
+    ADC0.CTRLD   = ADC_INITDLY_DLY256_gc | ADC_ASDV_ASVON_gc;                   // automatically wrap around sample delay 0..15
     ADC0.MUXPOS  = ADC_MUXPOS_INTREF_gc;      // internal Vref as positive input (single ended)
     ADC0.EVCTRL  = ADC_STARTEI_bm;            // start on event
     ADC0.INTCTRL = ADC_RESRDY_bm;             // irq on result ready
@@ -156,7 +157,7 @@ int main() {
 
     if (OUTPUT_SERIAL) {
         setbaud(&USART0, 115200);
-        USART0.CTRLB = USART_TXEN_bm;       // enable TX, add USART_ODME_bm to set open drain mode
+        USART0.CTRLB = USART_TXEN_bm /* | USART_ODME_bm */;       // enable TX, add USART_ODME_bm to set open drain mode
         USART0.CTRLA = USART_DREIE_bm;      // enable TX register empty irq
         PORTA.DIRSET = 1<<6;                // set PA6 as TXD 
     }
