@@ -139,7 +139,7 @@ int main() {
     ADC0.MUXPOS  = ADC_MUXPOS_INTREF_gc;      // internal Vref as positive input (single ended)
     ADC0.EVCTRL  = ADC_STARTEI_bm;            // start on event
     ADC0.INTCTRL = ADC_RESRDY_bm;             // irq on result ready
-    ADC0.CTRLA  |= ADC_RUNSTDBY | ADC_ENABLE_bm;  // enable the ADC, also run while sleep
+    ADC0.CTRLA  |= ADC_RUNSTBY_bm | ADC_ENABLE_bm;  // enable the ADC, also run while sleep
 
     // Configure event routing: TCA overflow -> synch0 -> user1 -> ADC start
     EVSYS.SYNCCH0    = EVSYS_SYNCCH0_TCA0_OVF_LUNF_gc;  // sync channel 0 = TCA overflow
