@@ -50,10 +50,10 @@ enum {
 // If you are pressed for space you can replace this with a hand-computed constant
 // cf. 24.3.2.1.1 but then you don't have the correction from SIGROW.OSCxxERRyV
 static void setbaud(USART_t* usart, uint32_t bd) {
-    uint32_t clk = F_CPU; // no check for validity, used if OSCCFG is not set as expected
+    uint32_t clk = F_CPU>>8; // no check for validity, used if OSCCFG is not set as expected
     switch (FUSE.OSCCFG & 0x3) { // Section 7.10.4.3
     case 1: // 16MHhz mainclock
-         clk = 16000000 * (1024 + SIGROW.OSC16ERR3V); // should be the error at 3V
+         clk = (16000000>>8) * (1024 + SIGROW.OSC16ERR3V); // should be the error at 3V
          break;
     }
 
@@ -61,9 +61,9 @@ static void setbaud(USART_t* usart, uint32_t bd) {
         clk /= ((uint8_t[16]){ 2, 4, 8, 16, 32, 64, 1, 1, 6, 10, 12, 24, 48, 1, 1, 1})[(CLKCTRL.MCLKCTRLB >> 1) & 0xf];
     }
 
-    clk <<= 2;  // * 4
+    clk <<= 2;
     clk /= bd;
-    clk >>= 10; //  / 1024
+    clk >>= 2;
 
     usart->BAUD = (uint16_t)clk;
 }
