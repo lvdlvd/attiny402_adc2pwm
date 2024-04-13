@@ -32,6 +32,7 @@
     PA3   WO0  PWM-out
     PA6   TXD  serial out
     PA1   toggled on ADC conversion-ready for debug
+    PA2        warning led: blink < 3.00V, solid > 4.15V
 
 */
 #include <avr/interrupt.h>
@@ -44,6 +45,7 @@ enum {
     OUTPUT_PWM    = 1,   // PA3
     OUTPUT_SERIAL = 1,   // PA6
     OUTPUT_DEBUG  = 1,   // PA1: toggle on ADC result
+    OUTPUT_LED    = 1,   // PA2: solid if > 4.15V, blink if < 3.00V
 };
 
 
@@ -88,13 +90,14 @@ static inline void put_char(uint8_t c) {
             txbuf[txhead++ % sizeof txbuf] = HDLC_ESC;
     }
     txbuf[txhead++ % sizeof txbuf] = c;
+    USART0.CTRLA |= USART_DREIE_bm;
 }
 static inline void put_flag() { txbuf[txhead++ % sizeof txbuf] = HDLC_FLAG; }
 
 ISR(USART0_DRE_vect) {
     if (OUTPUT_SERIAL) {
         if (txbuf_empty()) {
-            USART0.TXDATAL = HDLC_FLAG;
+            USART0.CTRLA &= ~USART_DREIE_bm;
         } else {
             USART0.TXDATAL = txbuf[txtail++ % sizeof txbuf];
         }
@@ -113,12 +116,28 @@ ISR(ADC0_RESRDY_vect) {
     }
 
     if (OUTPUT_SERIAL) {
-        val = (2500*65536UL) / val;  // convert to Vdd[mv]
+        uint16_t vdd = (2500*65536UL) / val;  // convert to Vdd[mv]
 
         // no race because the USART0_DRE can't run while this ISR runs
-        put_char(val >> 8);
-        put_char(val);
         put_flag();
+        put_char(vdd >> 8);
+        put_char(vdd);
+        vdd = ~vdd;
+        put_char(vdd >> 8);
+        put_char(vdd);
+    }
+
+    if (OUTPUT_LED) {
+        static uint8_t cnt = 0;
+        if (val > 54613) {  // < 3000mV
+            if ((cnt++ % 32 ) == 0) {
+                PORTA.OUTTGL = 1<<2;  // toggle PA2
+            }
+        } else if (val < 39470) { //  > 4150 mV
+            PORTA.OUTSET = 1<<2;  // SET PA2
+        } else {
+            PORTA.OUTCLR = 1<<2;  // clear PA2
+        }
     }
 }
 
@@ -162,6 +181,11 @@ int main() {
 
     if (OUTPUT_DEBUG) {
         PORTA.DIRSET = 1<<1;                // PA1 for debug output
+    }
+
+    if (OUTPUT_LED) {
+        PORTA.DIRSET = 1<<2;                // PA2 for LED output
+        PORTA.OUTSET = 1<<2;                // switch on
     }
 
     sei(); // enable interrupts
